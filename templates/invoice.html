@@ -230,8 +230,8 @@
         <td>{{ item.staff }}</td>
         <td>{{ item.task }}</td>
         <td class="num">{{ "%.2f"|format(item.hours) }}</td>
-        <td class="num">{{ "$%,.2f"|format(item.rate) }}</td>
-        <td class="num">{{ "$%,.2f"|format(item.amount) }}</td>
+        <td class="num">${{ "{:,.2f}".format(item.rate) }}</td>
+        <td class="num">${{ "{:,.2f}".format(item.amount) }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -241,7 +241,7 @@
     <div class="total-block">
       <div class="total-line">
         <span>Total</span>
-        <span class="total-amount">{{ "$%,.2f"|format(total) }}</span>
+        <span class="total-amount">${{ "{:,.2f}".format(total) }}</span>
       </div>
     </div>
   </div>

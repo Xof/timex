@@ -5,6 +5,8 @@ import os
 from datetime import date
 from typing import Optional
 
+from jinja2 import Environment, FileSystemLoader
+
 
 def load_rate_card(path: str) -> dict:
     """Load a rate card JSON file."""
@@ -95,3 +97,11 @@ def build_invoice_context(
         "total": total,
         "footer": footer,
     }
+
+
+def render_invoice_html(context: dict) -> str:
+    """Render the invoice template to an HTML string."""
+    template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("invoice.html")
+    return template.render(**context)

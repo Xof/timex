@@ -191,3 +191,60 @@ class TestBuildInvoiceContext:
         assert ctx["footer"] == "Payment due on receipt."
         assert ctx["total"] == 0.0
         assert ctx["line_items"] == []
+
+
+from render_invoice import render_invoice_html
+
+
+class TestRenderInvoiceHtml:
+    def test_renders_template_with_context(self):
+        ctx = {
+            "company": {
+                "name": "DVV Entertainment",
+                "address": ["PO Box 6317", "Alameda, CA 94501"],
+                "email": "accounting@dvvent.com",
+                "logo_path": "/tmp/logo.svg",
+            },
+            "client": {
+                "name": "Acme Corp",
+                "address": ["456 Oak Ave"],
+            },
+            "invoice_number": "INV-001",
+            "invoice_date": "04/06/26",
+            "terms": "Net 30",
+            "line_items": [
+                {"date": "04/01/26", "staff": "Alice", "task": "Dev",
+                 "hours": 2.0, "rate": 100.00, "amount": 200.00},
+            ],
+            "total": 200.00,
+            "footer": "Thanks!",
+        }
+        html = render_invoice_html(ctx)
+
+        assert "DVV Entertainment" in html
+        assert "Acme Corp" in html
+        assert "INV-001" in html
+        assert "Alice" in html
+        assert "$200.00" in html
+        assert "Thanks!" in html
+
+    def test_empty_line_items(self):
+        ctx = {
+            "company": {
+                "name": "DVV Entertainment",
+                "address": [],
+                "email": "test@test.com",
+                "logo_path": "/tmp/logo.svg",
+            },
+            "client": {"name": "Test", "address": []},
+            "invoice_number": "INV-001",
+            "invoice_date": "01/01/26",
+            "terms": "Net 30",
+            "line_items": [],
+            "total": 0.0,
+            "footer": "",
+        }
+        html = render_invoice_html(ctx)
+
+        assert "$0.00" in html
+        assert "<tbody>" in html
