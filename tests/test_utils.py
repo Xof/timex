@@ -108,3 +108,25 @@ class TestPreviousSemimonth:
         start, end = previous_semimonth(date(2028, 3, 5))
         assert start == date(2028, 2, 16)
         assert end == date(2028, 2, 29)
+
+
+from utils import output_dir
+
+
+class TestOutputDir:
+    def test_returns_formatted_path(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = output_dir(date(2026, 4, 1), date(2026, 4, 15))
+        assert result == "output/20260401-20260415/"
+
+    def test_creates_directory(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result = output_dir(date(2026, 4, 1), date(2026, 4, 15))
+        assert os.path.isdir(result)
+
+    def test_idempotent(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        result1 = output_dir(date(2026, 4, 1), date(2026, 4, 15))
+        result2 = output_dir(date(2026, 4, 1), date(2026, 4, 15))
+        assert result1 == result2
+        assert os.path.isdir(result1)
