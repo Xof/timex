@@ -130,3 +130,50 @@ class TestOutputDir:
         result2 = output_dir(date(2026, 4, 1), date(2026, 4, 15))
         assert result1 == result2
         assert os.path.isdir(result1)
+
+
+from utils import load_type_mappings, map_task_type
+
+
+SAMPLE_MAPPINGS_JSON = [
+    {"Development": "Engineering"},
+    {"Code Review": "Engineering"},
+    {"Meetings": "Admin"},
+    {"Design": "Creative"},
+]
+
+
+class TestLoadTypeMappings:
+    def test_loads_and_flattens(self, tmp_path):
+        path = tmp_path / "mappings.json"
+        path.write_text(json.dumps(SAMPLE_MAPPINGS_JSON))
+        result = load_type_mappings(str(path))
+        assert result == {
+            "Development": "Engineering",
+            "Code Review": "Engineering",
+            "Meetings": "Admin",
+            "Design": "Creative",
+        }
+
+    def test_empty_list(self, tmp_path):
+        path = tmp_path / "mappings.json"
+        path.write_text("[]")
+        result = load_type_mappings(str(path))
+        assert result == {}
+
+    def test_missing_file_raises(self):
+        with pytest.raises(FileNotFoundError):
+            load_type_mappings("/nonexistent/mappings.json")
+
+
+class TestMapTaskType:
+    def test_mapped_task(self):
+        mappings = {"Development": "Engineering"}
+        assert map_task_type("Development", mappings) == "Engineering"
+
+    def test_unmapped_task_passes_through(self):
+        mappings = {"Development": "Engineering"}
+        assert map_task_type("Unknown Task", mappings) == "Unknown Task"
+
+    def test_empty_mappings(self):
+        assert map_task_type("Development", {}) == "Development"
