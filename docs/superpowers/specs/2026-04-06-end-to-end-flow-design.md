@@ -13,12 +13,22 @@ Three standalone scripts, each independently runnable:
 - `generate_summary.py` — produces tab-delimited time summaries
 
 Shared infrastructure:
-- `utils.py` — semimonth date range logic and output directory management
+- `utils.py` — environment loading, semimonth date range logic, output directory management, type-mapping utilities
 - `harvest_reports.py` — existing Harvest API layer (unchanged)
 - `render_invoice.py` — existing pure rendering functions (CLI removed, type-mapping support added)
-- Config files: `client-info.json`, `type-mappings.json`, `rate_card.json`
+- Config files: `.env`, `client-info.json`, `type-mappings.json`, `rate_card.json`
 
 ## Shared Utilities (`utils.py`)
+
+### `load_env() -> None`
+
+Loads Harvest credentials into `os.environ`. Looks for a `.env` file in the same directory as the calling script. If found, parses `KEY=VALUE` lines (ignoring blank lines and `#` comments) and sets them in `os.environ`. Existing env vars are not overwritten (env vars take precedence over `.env` values).
+
+After loading, verifies that `HARVEST_ACCESS_TOKEN` and `HARVEST_ACCOUNT_ID` are present in `os.environ`. If either is missing, raises `ValueError` with a clear message listing what's missing and where to set it.
+
+No external dependencies — simple file parsing, not `python-dotenv`.
+
+All three scripts call `load_env()` at startup, before any Harvest API calls. `_harvest_get` in `harvest_reports.py` continues to read from `os.environ` as before.
 
 ### `previous_semimonth(today: date) -> tuple[date, date]`
 
