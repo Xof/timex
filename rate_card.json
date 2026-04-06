@@ -1,14 +1,12 @@
 {
     "rates": {
         "Alice Example": {
-            "Development": 175.00,
-            "Meetings": 175.00,
-            "Code Review": 175.00
+            "Engineering": 175.00,
+            "Admin": 175.00
         },
         "Bob Example": {
-            "Development": 150.00,
-            "Meetings": 150.00,
-            "Design": 140.00
+            "Engineering": 150.00,
+            "Creative": 140.00
         }
     },
     "default_rate": null
