@@ -265,3 +265,54 @@ class TestRenderInvoicePdf:
 
         mock_html_cls.assert_called_once_with(string=html_string)
         mock_html_cls.return_value.write_pdf.assert_called_once_with(output_path)
+
+
+class TestEndToEnd:
+    def test_generates_pdf_file(self, tmp_path):
+        harvest_data = {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Development", "hours": 6.0},
+                    {"date": "2026-04-01", "task": "Meetings", "hours": 1.5},
+                ],
+            },
+            "Bob": {
+                "Acme": [
+                    {"date": "2026-04-02", "task": "Development", "hours": 7.0},
+                ],
+            },
+        }
+        rate_card = {
+            "rates": {
+                "Alice": {"Development": 175.00, "Meetings": 150.00},
+                "Bob": {"Development": 125.00},
+            },
+            "default_rate": None,
+        }
+
+        ctx = build_invoice_context(
+            harvest_data=harvest_data,
+            rate_card=rate_card,
+            client_name="Acme Corp",
+            client_address=["456 Oak Ave, Floor 3", "San Francisco, CA 94102"],
+            invoice_number="INV-2026-042",
+            invoice_date=date(2026, 4, 6),
+        )
+
+        html = render_invoice_html(ctx)
+        output = str(tmp_path / "test-invoice.pdf")
+
+        def fake_write_pdf(path):
+            with open(path, "wb") as f:
+                f.write(b"%PDF-fake")
+
+        with patch("render_invoice.weasyprint.HTML") as mock_html_cls:
+            mock_html_cls.return_value.write_pdf.side_effect = fake_write_pdf
+            render_invoice_pdf(html, output)
+
+        assert os.path.exists(output)
+        assert os.path.getsize(output) > 0
+
+        # PDF files start with %PDF
+        with open(output, "rb") as f:
+            assert f.read(4) == b"%PDF"
