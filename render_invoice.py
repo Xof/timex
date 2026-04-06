@@ -1,6 +1,5 @@
 """Invoice rendering pipeline: Harvest data + rate card → PDF."""
 
-import argparse
 import json
 import os
 from datetime import date
@@ -124,48 +123,3 @@ def render_invoice_pdf(html_string: str, output_path: str) -> None:
     weasyprint.HTML(string=html_string).write_pdf(output_path)
 
 
-def main() -> None:
-    from harvest_reports import detailed_time_by_staff_client
-
-    parser = argparse.ArgumentParser(description="Generate a PDF invoice from Harvest time data.")
-    parser.add_argument("--start", required=True, help="Start date (YYYY-MM-DD)")
-    parser.add_argument("--end", required=True, help="End date (YYYY-MM-DD)")
-    parser.add_argument("--client-name", required=True, help="Client name for the invoice")
-    parser.add_argument("--client-address", required=True, nargs="+",
-                        help="Client address lines (e.g. '456 Oak Ave' 'City, ST 12345')")
-    parser.add_argument("--invoice-number", required=True, help="Invoice number (e.g. INV-2026-042)")
-    parser.add_argument("--invoice-date", required=True, help="Invoice date (YYYY-MM-DD)")
-    parser.add_argument("--rate-card", default="rate_card.json", help="Path to rate card JSON")
-    parser.add_argument("--output", default="invoice.pdf", help="Output PDF path")
-    parser.add_argument("--terms", default="Net 30", help="Payment terms")
-    parser.add_argument("--footer", default="Thank you for your business.",
-                        help="Footer text")
-
-    args = parser.parse_args()
-
-    start_date = date.fromisoformat(args.start)
-    end_date = date.fromisoformat(args.end)
-    invoice_date = date.fromisoformat(args.invoice_date)
-
-    rate_card = load_rate_card(args.rate_card)
-
-    harvest_data = detailed_time_by_staff_client(start_date, end_date)
-
-    context = build_invoice_context(
-        harvest_data=harvest_data,
-        rate_card=rate_card,
-        client_name=args.client_name,
-        client_address=args.client_address,
-        invoice_number=args.invoice_number,
-        invoice_date=invoice_date,
-        terms=args.terms,
-        footer=args.footer,
-    )
-
-    html = render_invoice_html(context)
-    render_invoice_pdf(html, args.output)
-    print(f"Invoice written to {args.output}")
-
-
-if __name__ == "__main__":
-    main()
