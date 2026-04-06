@@ -14,6 +14,8 @@ except (ImportError, OSError):
 
 from jinja2 import Environment, FileSystemLoader
 
+from utils import map_task_type
+
 
 def load_rate_card(path: str) -> dict:
     """Load a rate card JSON file."""
@@ -43,22 +45,26 @@ def _format_date_mmddyy(iso_date: str) -> str:
     return f"{month}/{day}/{year[2:]}"
 
 
-def build_line_items(harvest_data: dict, rate_card: dict) -> tuple:
+def build_line_items(harvest_data: dict, rate_card: dict, type_mappings: dict = None) -> tuple:
     """Build sorted, priced line items from Harvest report data and a rate card.
 
+    If type_mappings is provided, task names are mapped before rate lookup.
     Returns (line_items, total).
     """
+    if type_mappings is None:
+        type_mappings = {}
     raw_items = []
     for staff, clients in harvest_data.items():
         for _client, entries in clients.items():
             for entry in entries:
-                rate = lookup_rate(rate_card, staff, entry["task"])
+                task = map_task_type(entry["task"], type_mappings)
+                rate = lookup_rate(rate_card, staff, task)
                 amount = round(entry["hours"] * rate, 2)
                 raw_items.append({
                     "sort_date": entry["date"],
                     "date": _format_date_mmddyy(entry["date"]),
                     "staff": staff,
-                    "task": entry["task"],
+                    "task": task,
                     "hours": entry["hours"],
                     "rate": rate,
                     "amount": amount,
@@ -66,7 +72,6 @@ def build_line_items(harvest_data: dict, rate_card: dict) -> tuple:
 
     raw_items.sort(key=lambda x: (x["sort_date"], x["staff"]))
 
-    # Strip the sort key
     line_items = [{k: v for k, v in item.items() if k != "sort_date"} for item in raw_items]
     total = round(sum(item["amount"] for item in line_items), 2) if line_items else 0.0
     return line_items, total

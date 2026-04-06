@@ -316,3 +316,68 @@ class TestEndToEnd:
         # PDF files start with %PDF
         with open(output, "rb") as f:
             assert f.read(4) == b"%PDF"
+
+
+class TestBuildLineItemsWithTypeMappings:
+    def test_maps_task_names(self):
+        harvest_data = {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Development", "hours": 3.5},
+                    {"date": "2026-04-01", "task": "Code Review", "hours": 1.0},
+                ],
+            },
+        }
+        rate_card = {
+            "rates": {
+                "Alice": {"Engineering": 175.00},
+            },
+            "default_rate": None,
+        }
+        type_mappings = {"Development": "Engineering", "Code Review": "Engineering"}
+
+        line_items, total = build_line_items(harvest_data, rate_card, type_mappings)
+
+        assert line_items[0]["task"] == "Engineering"
+        assert line_items[1]["task"] == "Engineering"
+        assert line_items[0]["rate"] == 175.00
+        assert total == 787.50
+
+    def test_unmapped_tasks_pass_through(self):
+        harvest_data = {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Unusual Task", "hours": 2.0},
+                ],
+            },
+        }
+        rate_card = {
+            "rates": {
+                "Alice": {"Unusual Task": 100.00},
+            },
+            "default_rate": None,
+        }
+        type_mappings = {"Development": "Engineering"}
+
+        line_items, total = build_line_items(harvest_data, rate_card, type_mappings)
+
+        assert line_items[0]["task"] == "Unusual Task"
+        assert total == 200.00
+
+    def test_no_type_mappings_backward_compat(self):
+        harvest_data = {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Development", "hours": 2.0},
+                ],
+            },
+        }
+        rate_card = {
+            "rates": {"Alice": {"Development": 100.00}},
+            "default_rate": None,
+        }
+
+        line_items, total = build_line_items(harvest_data, rate_card)
+
+        assert line_items[0]["task"] == "Development"
+        assert total == 200.00
