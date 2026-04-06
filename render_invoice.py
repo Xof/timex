@@ -67,6 +67,7 @@ def build_line_items(harvest_data: dict, rate_card: dict, type_mappings: dict = 
                     "hours": entry["hours"],
                     "rate": rate,
                     "amount": amount,
+                    "notes": entry.get("notes", ""),
                 })
 
     raw_items.sort(key=lambda x: (x["sort_date"], x["staff"]))
@@ -89,6 +90,7 @@ def build_invoice_context(
 ) -> dict:
     """Assemble the full template context dict for an invoice."""
     line_items, total = build_line_items(harvest_data, rate_card, type_mappings)
+    total_hours = round(sum(item["hours"] for item in line_items), 2) if line_items else 0.0
     return {
         "company": {
             "name": "DVV Entertainment",
@@ -107,6 +109,7 @@ def build_invoice_context(
         "terms": terms,
         "line_items": line_items,
         "total": total,
+        "total_hours": total_hours,
         "footer": footer,
     }
 

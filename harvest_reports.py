@@ -62,8 +62,8 @@ def detailed_time_by_staff_client(start_date: date, end_date: date) -> dict:
         {"from": start_date.isoformat(), "to": end_date.isoformat()},
     )
 
-    # Accumulate hours: (user, client, date, task) -> hours
-    totals = defaultdict(float)
+    # Accumulate hours and notes: (user, client, date, task) -> {hours, notes}
+    totals = defaultdict(lambda: {"hours": 0.0, "notes": []})
     for entry in entries:
         key = (
             entry["user"]["name"],
@@ -71,13 +71,21 @@ def detailed_time_by_staff_client(start_date: date, end_date: date) -> dict:
             entry["spent_date"],
             entry["task"]["name"],
         )
-        totals[key] += entry["hours"]
+        totals[key]["hours"] += entry["hours"]
+        note = (entry.get("notes") or "").strip()
+        if note:
+            totals[key]["notes"].append(note)
 
     # Build nested structure
     result: dict[str, dict[str, list]] = {}
-    for (user, client, spent_date, task), hours in sorted(totals.items()):
+    for (user, client, spent_date, task), data in sorted(totals.items()):
         result.setdefault(user, {}).setdefault(client, []).append(
-            {"date": spent_date, "task": task, "hours": round(hours, 2)}
+            {
+                "date": spent_date,
+                "task": task,
+                "hours": round(data["hours"], 2),
+                "notes": "; ".join(data["notes"]),
+            }
         )
 
     return result

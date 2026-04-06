@@ -79,11 +79,11 @@ class TestBuildLineItems:
 
         assert line_items == [
             {"date": "04/01/26", "staff": "Alice", "task": "Development",
-             "hours": 3.5, "rate": 175.00, "amount": 612.50},
+             "hours": 3.5, "rate": 175.00, "amount": 612.50, "notes": ""},
             {"date": "04/01/26", "staff": "Alice", "task": "Meetings",
-             "hours": 1.0, "rate": 150.00, "amount": 150.00},
+             "hours": 1.0, "rate": 150.00, "amount": 150.00, "notes": ""},
             {"date": "04/02/26", "staff": "Bob", "task": "Development",
-             "hours": 7.0, "rate": 125.00, "amount": 875.00},
+             "hours": 7.0, "rate": 125.00, "amount": 875.00, "notes": ""},
         ]
         assert total == 1637.50
 
@@ -214,9 +214,10 @@ class TestRenderInvoiceHtml:
             "terms": "Net 30",
             "line_items": [
                 {"date": "04/01/26", "staff": "Alice", "task": "Dev",
-                 "hours": 2.0, "rate": 100.00, "amount": 200.00},
+                 "hours": 2.0, "rate": 100.00, "amount": 200.00, "notes": "Did some work"},
             ],
             "total": 200.00,
+            "total_hours": 2.0,
             "footer": "Thanks!",
         }
         html = render_invoice_html(ctx)
@@ -226,6 +227,7 @@ class TestRenderInvoiceHtml:
         assert "INV-001" in html
         assert "Alice" in html
         assert "$200.00" in html
+        assert "Did some work" in html
         assert "Thanks!" in html
 
     def test_empty_line_items(self):
@@ -242,6 +244,7 @@ class TestRenderInvoiceHtml:
             "terms": "Net 30",
             "line_items": [],
             "total": 0.0,
+            "total_hours": 0.0,
             "footer": "",
         }
         html = render_invoice_html(ctx)

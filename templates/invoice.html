@@ -142,6 +142,13 @@
     font-family: 'Droid Sans Mono', monospace;
   }
 
+  .notes {
+    font-size: 6.5px;
+    color: #999;
+    margin-top: 1px;
+    line-height: 1.3;
+  }
+
   .col-date  { width: 12%; }
   .col-staff { width: 28%; }
   .col-task  { width: 24%; }
@@ -156,6 +163,14 @@
 
   .total-block {
     width: 220px;
+  }
+
+  .total-hours-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 10px;
+    color: #777;
   }
 
   .total-line {
@@ -228,7 +243,7 @@
       <tr>
         <td>{{ item.date }}</td>
         <td>{{ item.staff }}</td>
-        <td>{{ item.task }}</td>
+        <td>{{ item.task }}{% if item.notes %}<div class="notes">{{ item.notes }}</div>{% endif %}</td>
         <td class="num">{{ "%.2f"|format(item.hours) }}</td>
         <td class="num">${{ "{:,.2f}".format(item.rate) }}</td>
         <td class="num">${{ "{:,.2f}".format(item.amount) }}</td>
@@ -239,6 +254,10 @@
 
   <div class="total-row">
     <div class="total-block">
+      <div class="total-hours-line">
+        <span>Total Hours</span>
+        <span class="total-amount">{{ "%.2f"|format(total_hours) }}</span>
+      </div>
       <div class="total-line">
         <span>Total</span>
         <span class="total-amount">${{ "{:,.2f}".format(total) }}</span>

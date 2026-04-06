@@ -97,6 +97,7 @@ class TestDetailedTimeByStaffClient:
             {
                 "spent_date": "2026-04-01",
                 "hours": 2.0,
+                "notes": "Backend API work",
                 "user": {"id": 1, "name": "Alice"},
                 "client": {"id": 10, "name": "Acme"},
                 "task": {"id": 100, "name": "Development"},
@@ -104,6 +105,7 @@ class TestDetailedTimeByStaffClient:
             {
                 "spent_date": "2026-04-01",
                 "hours": 1.5,
+                "notes": "Frontend fixes",
                 "user": {"id": 1, "name": "Alice"},
                 "client": {"id": 10, "name": "Acme"},
                 "task": {"id": 100, "name": "Development"},
@@ -111,6 +113,7 @@ class TestDetailedTimeByStaffClient:
             {
                 "spent_date": "2026-04-01",
                 "hours": 1.0,
+                "notes": "",
                 "user": {"id": 1, "name": "Alice"},
                 "client": {"id": 10, "name": "Acme"},
                 "task": {"id": 101, "name": "Meetings"},
@@ -129,13 +132,16 @@ class TestDetailedTimeByStaffClient:
         assert result == {
             "Alice": {
                 "Acme": [
-                    {"date": "2026-04-01", "task": "Development", "hours": 3.5},
-                    {"date": "2026-04-01", "task": "Meetings", "hours": 1.0},
+                    {"date": "2026-04-01", "task": "Development", "hours": 3.5,
+                     "notes": "Backend API work; Frontend fixes"},
+                    {"date": "2026-04-01", "task": "Meetings", "hours": 1.0,
+                     "notes": ""},
                 ],
             },
             "Bob": {
                 "Globex": [
-                    {"date": "2026-04-02", "task": "Development", "hours": 4.0},
+                    {"date": "2026-04-02", "task": "Development", "hours": 4.0,
+                     "notes": ""},
                 ],
             },
         }
