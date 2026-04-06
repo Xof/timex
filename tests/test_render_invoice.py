@@ -130,3 +130,64 @@ class TestBuildLineItems:
 
         staff_order = [item["staff"] for item in line_items]
         assert staff_order == ["Alice", "Zara", "Alice"]
+
+
+from datetime import date
+
+from render_invoice import build_invoice_context
+
+
+class TestBuildInvoiceContext:
+    def test_assembles_full_context(self):
+        harvest_data = {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Development", "hours": 3.5},
+                ],
+            },
+        }
+        rate_card = {
+            "rates": {"Alice": {"Development": 175.00}},
+            "default_rate": None,
+        }
+
+        ctx = build_invoice_context(
+            harvest_data=harvest_data,
+            rate_card=rate_card,
+            client_name="Acme Corp",
+            client_address=["456 Oak Ave", "San Francisco, CA 94102"],
+            invoice_number="INV-2026-001",
+            invoice_date=date(2026, 4, 6),
+        )
+
+        assert ctx["company"]["name"] == "DVV Entertainment"
+        assert ctx["company"]["address"] == ["PO Box 6317", "Alameda, CA 94501"]
+        assert ctx["company"]["email"] == "accounting@dvvent.com"
+        assert ctx["company"]["logo_path"].endswith("dvv-logo.svg")
+        assert ctx["client"] == {
+            "name": "Acme Corp",
+            "address": ["456 Oak Ave", "San Francisco, CA 94102"],
+        }
+        assert ctx["invoice_number"] == "INV-2026-001"
+        assert ctx["invoice_date"] == "04/06/26"
+        assert ctx["terms"] == "Net 30"
+        assert len(ctx["line_items"]) == 1
+        assert ctx["line_items"][0]["amount"] == 612.50
+        assert ctx["total"] == 612.50
+        assert ctx["footer"] == "Thank you for your business."
+
+    def test_custom_terms_and_footer(self):
+        ctx = build_invoice_context(
+            harvest_data={},
+            rate_card={"rates": {}, "default_rate": None},
+            client_name="Test",
+            client_address=["123 St"],
+            invoice_number="INV-001",
+            invoice_date=date(2026, 1, 15),
+            terms="Net 15",
+            footer="Payment due on receipt.",
+        )
+        assert ctx["terms"] == "Net 15"
+        assert ctx["footer"] == "Payment due on receipt."
+        assert ctx["total"] == 0.0
+        assert ctx["line_items"] == []

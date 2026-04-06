@@ -1,6 +1,8 @@
 """Invoice rendering pipeline: Harvest data + rate card → PDF."""
 
 import json
+import os
+from datetime import date
 from typing import Optional
 
 
@@ -59,3 +61,37 @@ def build_line_items(harvest_data: dict, rate_card: dict) -> tuple:
     line_items = [{k: v for k, v in item.items() if k != "sort_date"} for item in raw_items]
     total = round(sum(item["amount"] for item in line_items), 2) if line_items else 0.0
     return line_items, total
+
+
+def build_invoice_context(
+    harvest_data: dict,
+    rate_card: dict,
+    client_name: str,
+    client_address: list,
+    invoice_number: str,
+    invoice_date: date,
+    terms: str = "Net 30",
+    footer: str = "Thank you for your business.",
+) -> dict:
+    """Assemble the full template context dict for an invoice."""
+    line_items, total = build_line_items(harvest_data, rate_card)
+    return {
+        "company": {
+            "name": "DVV Entertainment",
+            "address": ["PO Box 6317", "Alameda, CA 94501"],
+            "email": "accounting@dvvent.com",
+            "logo_path": os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "assets", "dvv-logo.svg"
+            ),
+        },
+        "client": {
+            "name": client_name,
+            "address": client_address,
+        },
+        "invoice_number": invoice_number,
+        "invoice_date": invoice_date.strftime("%m/%d/%y"),
+        "terms": terms,
+        "line_items": line_items,
+        "total": total,
+        "footer": footer,
+    }
