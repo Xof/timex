@@ -85,9 +85,10 @@ def build_invoice_context(
     invoice_date: date,
     terms: str = "Net 30",
     footer: str = "Thank you for your business.",
+    type_mappings: dict = None,
 ) -> dict:
     """Assemble the full template context dict for an invoice."""
-    line_items, total = build_line_items(harvest_data, rate_card)
+    line_items, total = build_line_items(harvest_data, rate_card, type_mappings)
     return {
         "company": {
             "name": "DVV Entertainment",
