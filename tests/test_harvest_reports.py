@@ -2,7 +2,7 @@ import os
 from datetime import date
 from unittest.mock import patch, MagicMock
 
-from harvest_reports import _harvest_get
+from harvest_reports import _harvest_get, detailed_time_by_staff_client
 
 
 def _mock_response(json_data, status_code=200, headers=None):
@@ -78,3 +78,63 @@ class TestHarvestGet:
         import pytest as pt
         with pt.raises(ValueError, match="HARVEST_ACCESS_TOKEN"):
             _harvest_get("/v2/time_entries", {})
+
+
+class TestDetailedTimeByStaffClient:
+    @patch("harvest_reports._harvest_get")
+    def test_groups_and_sums(self, mock_get):
+        mock_get.return_value = [
+            {
+                "spent_date": "2026-04-01",
+                "hours": 2.0,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 100, "name": "Development"},
+            },
+            {
+                "spent_date": "2026-04-01",
+                "hours": 1.5,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 100, "name": "Development"},
+            },
+            {
+                "spent_date": "2026-04-01",
+                "hours": 1.0,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 101, "name": "Meetings"},
+            },
+            {
+                "spent_date": "2026-04-02",
+                "hours": 4.0,
+                "user": {"id": 2, "name": "Bob"},
+                "client": {"id": 11, "name": "Globex"},
+                "task": {"id": 100, "name": "Development"},
+            },
+        ]
+
+        result = detailed_time_by_staff_client(date(2026, 4, 1), date(2026, 4, 30))
+
+        assert result == {
+            "Alice": {
+                "Acme": [
+                    {"date": "2026-04-01", "task": "Development", "hours": 3.5},
+                    {"date": "2026-04-01", "task": "Meetings", "hours": 1.0},
+                ],
+            },
+            "Bob": {
+                "Globex": [
+                    {"date": "2026-04-02", "task": "Development", "hours": 4.0},
+                ],
+            },
+        }
+        mock_get.assert_called_once_with(
+            "/v2/time_entries", {"from": "2026-04-01", "to": "2026-04-30"}
+        )
+
+    @patch("harvest_reports._harvest_get")
+    def test_empty(self, mock_get):
+        mock_get.return_value = []
+        result = detailed_time_by_staff_client(date(2026, 4, 1), date(2026, 4, 30))
+        assert result == {}

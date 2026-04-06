@@ -2,6 +2,7 @@
 
 import os
 import time
+from collections import defaultdict
 from datetime import date
 from typing import Optional
 
@@ -48,3 +49,31 @@ def _harvest_get(endpoint: str, params: Optional[dict] = None) -> list[dict]:
         params = None  # params are baked into the next URL
 
     return all_records
+
+
+def detailed_time_by_staff_client(start_date: date, end_date: date) -> dict:
+    """Detailed time report grouped by staff member, then client, with daily task totals."""
+    entries = _harvest_get(
+        "/v2/time_entries",
+        {"from": start_date.isoformat(), "to": end_date.isoformat()},
+    )
+
+    # Accumulate hours: (user, client, date, task) -> hours
+    totals = defaultdict(float)
+    for entry in entries:
+        key = (
+            entry["user"]["name"],
+            entry["client"]["name"],
+            entry["spent_date"],
+            entry["task"]["name"],
+        )
+        totals[key] += entry["hours"]
+
+    # Build nested structure
+    result: dict[str, dict[str, list]] = {}
+    for (user, client, spent_date, task), hours in sorted(totals.items()):
+        result.setdefault(user, {}).setdefault(client, []).append(
+            {"date": spent_date, "task": task, "hours": round(hours, 2)}
+        )
+
+    return result
