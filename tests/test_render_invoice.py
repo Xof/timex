@@ -248,3 +248,20 @@ class TestRenderInvoiceHtml:
 
         assert "$0.00" in html
         assert "<tbody>" in html
+
+
+from unittest.mock import patch, MagicMock
+
+from render_invoice import render_invoice_pdf
+
+
+class TestRenderInvoicePdf:
+    @patch("render_invoice.weasyprint.HTML")
+    def test_calls_weasyprint_and_writes_pdf(self, mock_html_cls, tmp_path):
+        output_path = str(tmp_path / "invoice.pdf")
+        html_string = "<html><body>test</body></html>"
+
+        render_invoice_pdf(html_string, output_path)
+
+        mock_html_cls.assert_called_once_with(string=html_string)
+        mock_html_cls.return_value.write_pdf.assert_called_once_with(output_path)

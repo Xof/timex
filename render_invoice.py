@@ -5,6 +5,12 @@ import os
 from datetime import date
 from typing import Optional
 
+try:
+    import weasyprint
+except (ImportError, OSError):
+    import types as _types
+    weasyprint = _types.SimpleNamespace(HTML=None)  # type: ignore[assignment]
+
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -105,3 +111,8 @@ def render_invoice_html(context: dict) -> str:
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("invoice.html")
     return template.render(**context)
+
+
+def render_invoice_pdf(html_string: str, output_path: str) -> None:
+    """Convert an HTML string to a PDF file via WeasyPrint."""
+    weasyprint.HTML(string=html_string).write_pdf(output_path)
