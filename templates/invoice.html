@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Droid+Sans+Mono&display=swap');
+
+  @page {
+    size: letter portrait;
+    margin: 0.75in;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .header-left {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .logo {
+    width: 120px;
+    height: auto;
+  }
+
+  .company-name {
+    font-weight: 700;
+    font-size: 11px;
+    color: #201e20;
+  }
+
+  .company-detail {
+    font-size: 8px;
+    color: #777;
+  }
+
+  .header-right {
+    text-align: right;
+  }
+
+  .invoice-label {
+    font-size: 13px;
+    font-weight: 300;
+    color: #201e20;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .invoice-meta {
+    font-size: 10px;
+  }
+
+  .invoice-meta .label {
+    color: #999;
+  }
+
+  .invoice-meta .mono {
+    font-family: 'Droid Sans Mono', monospace;
+  }
+
+  .bill-to {
+    margin-bottom: 24px;
+    padding: 14px 0;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  .bill-to-label {
+    color: #999;
+    font-size: 7px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+
+  .client-name {
+    font-weight: 700;
+    font-size: 11px;
+    color: #201e20;
+  }
+
+  .client-detail {
+    font-size: 8px;
+    color: #777;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 7.5px;
+  }
+
+  thead tr {
+    border-bottom: 2px solid #201e20;
+  }
+
+  th {
+    text-align: left;
+    padding: 5px 6px;
+    font-weight: 700;
+    font-size: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+  }
+
+  th.num {
+    text-align: right;
+    font-family: 'Droid Sans Mono', monospace;
+  }
+
+  td {
+    padding: 4px 6px;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  td.num {
+    text-align: right;
+    font-family: 'Droid Sans Mono', monospace;
+  }
+
+  .col-date  { width: 12%; }
+  .col-staff { width: 28%; }
+  .col-task  { width: 24%; }
+  .col-hours { width: 10%; }
+  .col-rate  { width: 12%; }
+  .col-amount { width: 14%; }
+
+  .total-row {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .total-block {
+    width: 220px;
+  }
+
+  .total-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 2px solid #201e20;
+    font-weight: 700;
+    font-size: 14px;
+    color: #201e20;
+  }
+
+  .total-amount {
+    font-family: 'Droid Sans Mono', monospace;
+  }
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e5;
+    color: #aaa;
+    font-size: 9px;
+    text-align: center;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <img class="logo" src="file://{{ company.logo_path }}" alt="{{ company.name }}">
+      <div>
+        <div class="company-name">{{ company.name }}</div>
+        {% for line in company.address %}
+        <div class="company-detail">{{ line }}</div>
+        {% endfor %}
+        <div class="company-detail">{{ company.email }}</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="invoice-label">INVOICE</div>
+      <div class="invoice-meta"><span class="label">No:</span> <span class="mono">{{ invoice_number }}</span></div>
+      <div class="invoice-meta"><span class="label">Date:</span> {{ invoice_date }}</div>
+      <div class="invoice-meta"><span class="label">Terms:</span> {{ terms }}</div>
+    </div>
+  </div>
+
+  <div class="bill-to">
+    <div class="bill-to-label">Bill To</div>
+    <div class="client-name">{{ client.name }}</div>
+    {% for line in client.address %}
+    <div class="client-detail">{{ line }}</div>
+    {% endfor %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date">Date</th>
+        <th class="col-staff">Staff</th>
+        <th class="col-task">Task</th>
+        <th class="col-hours num">Hours</th>
+        <th class="col-rate num">Rate</th>
+        <th class="col-amount num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in line_items %}
+      <tr>
+        <td>{{ item.date }}</td>
+        <td>{{ item.staff }}</td>
+        <td>{{ item.task }}</td>
+        <td class="num">{{ "%.2f"|format(item.hours) }}</td>
+        <td class="num">{{ "$%,.2f"|format(item.rate) }}</td>
+        <td class="num">{{ "$%,.2f"|format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="total-row">
+    <div class="total-block">
+      <div class="total-line">
+        <span>Total</span>
+        <span class="total-amount">{{ "$%,.2f"|format(total) }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if footer %}
+  <div class="footer">{{ footer }}</div>
+  {% endif %}
+
+</body>
+</html>
