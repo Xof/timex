@@ -63,3 +63,48 @@ class TestLoadEnv:
 
         with pytest.raises(ValueError, match="HARVEST_ACCOUNT_ID"):
             load_env(str(tmp_path))
+
+
+from utils import previous_semimonth
+
+
+class TestPreviousSemimonth:
+    def test_day_in_first_half_returns_prev_month_second_half(self):
+        start, end = previous_semimonth(date(2026, 4, 6))
+        assert start == date(2026, 3, 16)
+        assert end == date(2026, 3, 31)
+
+    def test_day_on_15th_returns_prev_month_second_half(self):
+        start, end = previous_semimonth(date(2026, 4, 15))
+        assert start == date(2026, 3, 16)
+        assert end == date(2026, 3, 31)
+
+    def test_day_on_16th_returns_same_month_first_half(self):
+        start, end = previous_semimonth(date(2026, 4, 16))
+        assert start == date(2026, 4, 1)
+        assert end == date(2026, 4, 15)
+
+    def test_day_on_last_day_returns_same_month_first_half(self):
+        start, end = previous_semimonth(date(2026, 4, 30))
+        assert start == date(2026, 4, 1)
+        assert end == date(2026, 4, 15)
+
+    def test_january_first_half_wraps_to_december(self):
+        start, end = previous_semimonth(date(2026, 1, 10))
+        assert start == date(2025, 12, 16)
+        assert end == date(2025, 12, 31)
+
+    def test_february_second_half_handles_short_month(self):
+        start, end = previous_semimonth(date(2026, 2, 28))
+        assert start == date(2026, 2, 1)
+        assert end == date(2026, 2, 15)
+
+    def test_march_first_half_handles_feb_end(self):
+        start, end = previous_semimonth(date(2026, 3, 5))
+        assert start == date(2026, 2, 16)
+        assert end == date(2026, 2, 28)
+
+    def test_march_first_half_handles_feb_leap(self):
+        start, end = previous_semimonth(date(2028, 3, 5))
+        assert start == date(2028, 2, 16)
+        assert end == date(2028, 2, 29)
