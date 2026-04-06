@@ -38,3 +38,43 @@ class TestHarvestGet:
         assert kwargs["headers"]["Authorization"] == "Bearer tok"
         assert kwargs["headers"]["Harvest-Account-Id"] == "123"
         assert "User-Agent" in kwargs["headers"]
+
+    @patch.dict(os.environ, {"HARVEST_ACCESS_TOKEN": "tok", "HARVEST_ACCOUNT_ID": "123"})
+    @patch("harvest_reports.requests.get")
+    def test_pagination(self, mock_get):
+        page1 = _mock_response({
+            "time_entries": [{"id": 1}],
+            "links": {"next": "https://api.harvestapp.com/v2/time_entries?cursor=abc"},
+        })
+        page2 = _mock_response({
+            "time_entries": [{"id": 2}],
+            "links": {"next": None},
+        })
+        mock_get.side_effect = [page1, page2]
+
+        result = _harvest_get("/v2/time_entries", {"from": "2026-04-01", "to": "2026-04-30"})
+
+        assert result == [{"id": 1}, {"id": 2}]
+        assert mock_get.call_count == 2
+
+    @patch.dict(os.environ, {"HARVEST_ACCESS_TOKEN": "tok", "HARVEST_ACCOUNT_ID": "123"})
+    @patch("harvest_reports.time.sleep")
+    @patch("harvest_reports.requests.get")
+    def test_rate_limit_retry(self, mock_get, mock_sleep):
+        rate_limited = _mock_response({}, status_code=429, headers={"Retry-After": "5"})
+        success = _mock_response({
+            "time_entries": [{"id": 1}],
+            "links": {"next": None},
+        })
+        mock_get.side_effect = [rate_limited, success]
+
+        result = _harvest_get("/v2/time_entries", {})
+
+        assert result == [{"id": 1}]
+        mock_sleep.assert_called_once_with(5)
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_missing_env_vars(self):
+        import pytest as pt
+        with pt.raises(ValueError, match="HARVEST_ACCESS_TOKEN"):
+            _harvest_get("/v2/time_entries", {})
