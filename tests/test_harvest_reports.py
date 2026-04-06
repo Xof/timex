@@ -2,7 +2,7 @@ import os
 from datetime import date
 from unittest.mock import patch, MagicMock
 
-from harvest_reports import _harvest_get, detailed_time_by_staff_client
+from harvest_reports import _harvest_get, detailed_time_by_staff_client, hours_summary_by_staff_day
 
 
 def _mock_response(json_data, status_code=200, headers=None):
@@ -137,4 +137,60 @@ class TestDetailedTimeByStaffClient:
     def test_empty(self, mock_get):
         mock_get.return_value = []
         result = detailed_time_by_staff_client(date(2026, 4, 1), date(2026, 4, 30))
+        assert result == {}
+
+
+class TestHoursSummaryByStaffDay:
+    @patch("harvest_reports._harvest_get")
+    def test_groups_sums_and_totals(self, mock_get):
+        mock_get.return_value = [
+            {
+                "spent_date": "2026-04-01",
+                "hours": 2.0,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 100, "name": "Development"},
+            },
+            {
+                "spent_date": "2026-04-01",
+                "hours": 1.5,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 100, "name": "Development"},
+            },
+            {
+                "spent_date": "2026-04-01",
+                "hours": 1.0,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 10, "name": "Acme"},
+                "task": {"id": 101, "name": "Meetings"},
+            },
+            {
+                "spent_date": "2026-04-02",
+                "hours": 7.0,
+                "user": {"id": 1, "name": "Alice"},
+                "client": {"id": 11, "name": "Globex"},
+                "task": {"id": 100, "name": "Development"},
+            },
+        ]
+
+        result = hours_summary_by_staff_day(date(2026, 4, 1), date(2026, 4, 30))
+
+        assert result == {
+            "Alice": {
+                "2026-04-01": {
+                    "tasks": {"Development": 3.5, "Meetings": 1.0},
+                    "total": 4.5,
+                },
+                "2026-04-02": {
+                    "tasks": {"Development": 7.0},
+                    "total": 7.0,
+                },
+            },
+        }
+
+    @patch("harvest_reports._harvest_get")
+    def test_empty(self, mock_get):
+        mock_get.return_value = []
+        result = hours_summary_by_staff_day(date(2026, 4, 1), date(2026, 4, 30))
         assert result == {}

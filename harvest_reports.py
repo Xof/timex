@@ -77,3 +77,33 @@ def detailed_time_by_staff_client(start_date: date, end_date: date) -> dict:
         )
 
     return result
+
+
+def hours_summary_by_staff_day(start_date: date, end_date: date) -> dict:
+    """Hours summary grouped by staff member, then date, with per-task breakdown and daily total."""
+    entries = _harvest_get(
+        "/v2/time_entries",
+        {"from": start_date.isoformat(), "to": end_date.isoformat()},
+    )
+
+    # Accumulate hours: (user, date, task) -> hours
+    totals = defaultdict(float)
+    for entry in entries:
+        key = (
+            entry["user"]["name"],
+            entry["spent_date"],
+            entry["task"]["name"],
+        )
+        totals[key] += entry["hours"]
+
+    # Build nested structure
+    result: dict[str, dict[str, dict]] = {}
+    for (user, spent_date, task), hours in sorted(totals.items()):
+        day_data = result.setdefault(user, {}).setdefault(
+            spent_date, {"tasks": {}, "total": 0.0}
+        )
+        rounded = round(hours, 2)
+        day_data["tasks"][task] = rounded
+        day_data["total"] = round(day_data["total"] + rounded, 2)
+
+    return result
