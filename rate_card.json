@@ -1,0 +1,15 @@
+{
+    "rates": {
+        "Alice Example": {
+            "Development": 175.00,
+            "Meetings": 175.00,
+            "Code Review": 175.00
+        },
+        "Bob Example": {
+            "Development": 150.00,
+            "Meetings": 150.00,
+            "Design": 140.00
+        }
+    },
+    "default_rate": null
+}
