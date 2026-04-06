@@ -2,18 +2,18 @@ import os
 from datetime import date
 from unittest.mock import patch, MagicMock
 
+import requests
+
 from harvest_reports import _harvest_get, detailed_time_by_staff_client, hours_summary_by_staff_day
 
 
-def _mock_response(json_data, status_code=200, headers=None):
+def _mock_response(json_data, status_code=200, headers=None, text=""):
     resp = MagicMock()
     resp.status_code = status_code
+    resp.ok = status_code < 400
     resp.json.return_value = json_data
     resp.headers = headers or {}
-    resp.raise_for_status = MagicMock()
-    if status_code >= 400 and status_code != 429:
-        from requests.exceptions import HTTPError
-        resp.raise_for_status.side_effect = HTTPError(response=resp)
+    resp.text = text
     return resp
 
 
@@ -72,6 +72,16 @@ class TestHarvestGet:
 
         assert result == [{"id": 1}]
         mock_sleep.assert_called_once_with(5)
+
+    @patch.dict(os.environ, {"HARVEST_ACCESS_TOKEN": "tok", "HARVEST_ACCOUNT_ID": "123"})
+    @patch("harvest_reports.requests.get")
+    def test_http_error_includes_body(self, mock_get):
+        import pytest as pt
+        mock_get.return_value = _mock_response(
+            {}, status_code=403, text="insufficient permissions"
+        )
+        with pt.raises(requests.HTTPError, match="403.*insufficient permissions"):
+            _harvest_get("/v2/time_entries", {})
 
     @patch.dict(os.environ, {}, clear=True)
     def test_missing_env_vars(self):

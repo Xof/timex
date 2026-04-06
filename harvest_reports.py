@@ -37,7 +37,11 @@ def _harvest_get(endpoint: str, params: Optional[dict] = None) -> list[dict]:
             time.sleep(retry_after)
             continue
 
-        resp.raise_for_status()
+        if not resp.ok:
+            raise requests.HTTPError(
+                f"HTTP {resp.status_code}: {resp.text}", response=resp
+            )
+
         data = resp.json()
 
         # The response key is the last segment of the endpoint path
