@@ -6,10 +6,12 @@ summary, and a rendered PDF invoice.
 
 ## Installation
 
-Requires Python 3.13+.
+Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/). `uv sync` creates a
+virtual environment and installs the project — including its console commands —
+along with the test tooling:
 
 ```
-pip install -r requirements.txt
+uv sync
 ```
 
 `weasyprint` has system-library dependencies (Pango, Cairo, GDK-PixBuf). On
@@ -49,40 +51,40 @@ Output is written to `output/YYYYMMDD-YYYYMMDD/` (the date range), unless
 
 ## Scripts
 
-### `download_harvest.py` — snapshot raw data
+### `download-harvest` — snapshot raw data
 
 Fetches a detailed time report and a per-staff / per-day hours summary, and
 writes each to a JSON file. Useful for archiving or for feeding other tools.
 
 ```
-python download_harvest.py [--start 2026-04-01] [--end 2026-04-15] [--output-dir path]
+uv run download-harvest [--start 2026-04-01] [--end 2026-04-15] [--output-dir path]
 ```
 
 Writes:
 - `detailed-time.json`
 - `hours-summary.json`
 
-### `generate_summary.py` — tab-delimited time summary
+### `generate-summary` — tab-delimited time summary
 
 Produces a flat TSV with one row per (staff, date, mapped-task-type), plus
 per-staff subtotals and a grand total per staff member. Suitable for pasting
 into a spreadsheet.
 
 ```
-python generate_summary.py [--start ...] [--end ...] \
+uv run generate-summary [--start ...] [--end ...] \
     [--type-mappings type-mappings.json] [--output-dir path]
 ```
 
 Writes `time-summary.tsv` with columns: `Staff  Date  Type  Hours` (dates are
 `MM/DD/YY`; subtotal and total rows leave `Date` empty).
 
-### `generate_invoice.py` — PDF invoice
+### `generate-invoice` — PDF invoice
 
 Renders a per-client PDF invoice from the Harvest detail, priced against
 `rate_card.json`.
 
 ```
-python generate_invoice.py \
+uv run generate-invoice \
     --client-name "PGX Inc." \
     --invoice-number INV-2026-042 \
     [--start ...] [--end ...] \
@@ -103,13 +105,13 @@ resolved output directory.
 
 ```
 # 1. Archive the period's raw data
-python download_harvest.py
+uv run download-harvest
 
 # 2. Produce a summary for internal review
-python generate_summary.py
+uv run generate-summary
 
 # 3. Generate a client invoice
-python generate_invoice.py --client-name "PGX Inc." --invoice-number INV-2026-042
+uv run generate-invoice --client-name "PGX Inc." --invoice-number INV-2026-042
 ```
 
 All three default to the same previous-semimonth range, so they land in the
@@ -118,5 +120,5 @@ same `output/` subdirectory.
 ## Tests
 
 ```
-python -m pytest tests/ -v
+uv run pytest tests/ -v
 ```

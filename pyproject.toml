@@ -1,7 +1,7 @@
 [project]
 name = "timex"
 version = "0.1.0"
-description = "Add your description here"
+description = "Harvest time-tracking report generator"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -9,3 +9,33 @@ dependencies = [
     "jinja2",
     "weasyprint",
 ]
+
+# Console entry points — run via `uv run <command>` (e.g. `uv run generate-invoice`).
+# Each maps to the module's main() function.
+[project.scripts]
+download-harvest = "download_harvest:main"
+generate-summary = "generate_summary:main"
+generate-invoice = "generate_invoice:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Flat module layout: there is no top-level package matching the project name,
+# so the wheel contents are listed explicitly. templates/ and assets/ ship at the
+# wheel root so render_invoice.py's __file__-relative template loading resolves in
+# both editable (dev) and built installs.
+[tool.hatch.build.targets.wheel]
+include = [
+    "download_harvest.py",
+    "generate_summary.py",
+    "generate_invoice.py",
+    "render_invoice.py",
+    "harvest_reports.py",
+    "utils.py",
+    "templates",
+    "assets",
+]
+
+[dependency-groups]
+dev = ["pytest"]
