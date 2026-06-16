@@ -116,8 +116,8 @@ def build_invoice_context(
     client_address: list,
     invoice_number: str,
     invoice_date: date,
-    terms: str = "Net 30",
-    footer: str = "Thank you for your business.",
+    terms: str = "Net 20",
+    footer: str = "We appreciate your business!",
     type_mappings: dict = None,
 ) -> dict:
     """Assemble the full template context dict for an invoice."""

@@ -173,11 +173,11 @@ class TestBuildInvoiceContext:
         }
         assert ctx["invoice_number"] == "INV-2026-001"
         assert ctx["invoice_date"] == "04/06/26"
-        assert ctx["terms"] == "Net 30"
+        assert ctx["terms"] == "Net 20"
         assert len(ctx["line_items"]) == 1
         assert ctx["line_items"][0]["amount"] == 612.50
         assert ctx["total"] == 612.50
-        assert ctx["footer"] == "Thank you for your business."
+        assert ctx["footer"] == "We appreciate your business!"
 
     def test_custom_terms_and_footer(self):
         ctx = build_invoice_context(
