@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from datetime import date
+from typing import Optional
 
 from harvest_reports import detailed_time_by_staff_client
 from render_invoice import (
@@ -45,11 +46,21 @@ def build_and_render(
     client_address: list,
     invoice_number: str,
     invoice_date: date,
-    terms: str,
-    footer: str,
     output_path: str,
+    terms: Optional[str] = None,
+    footer: Optional[str] = None,
 ) -> None:
-    """Build invoice context and render to PDF."""
+    """Build invoice context and render to PDF.
+
+    terms/footer are forwarded only when provided; when omitted they fall through
+    to build_invoice_context's defaults, keeping a single source of truth for the
+    default payment terms and footer text.
+    """
+    overrides = {}
+    if terms is not None:
+        overrides["terms"] = terms
+    if footer is not None:
+        overrides["footer"] = footer
     context = build_invoice_context(
         harvest_data=harvest_data,
         rate_card=rate_card,
@@ -57,9 +68,8 @@ def build_and_render(
         client_address=client_address,
         invoice_number=invoice_number,
         invoice_date=invoice_date,
-        terms=terms,
-        footer=footer,
         type_mappings=type_mappings,
+        **overrides,
     )
     html = render_invoice_html(context)
     render_invoice_pdf(html, output_path)
@@ -72,8 +82,8 @@ def main() -> None:
     parser.add_argument("--start", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end", help="End date (YYYY-MM-DD)")
     parser.add_argument("--invoice-date", help="Invoice date (YYYY-MM-DD), defaults to today")
-    parser.add_argument("--terms", default="Net 30", help="Payment terms")
-    parser.add_argument("--footer", default="Thank you for your business.", help="Footer text")
+    parser.add_argument("--terms", help="Payment terms (defaults to the invoice's standard terms)")
+    parser.add_argument("--footer", help="Footer text (defaults to the invoice's standard footer)")
     parser.add_argument("--rate-card", default="rate_card.json", help="Rate card path")
     parser.add_argument("--client-info", default="client-info.json", help="Client info path")
     parser.add_argument("--type-mappings", default="type-mappings.json", help="Type mappings path")

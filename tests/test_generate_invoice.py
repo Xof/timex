@@ -94,3 +94,22 @@ class TestBuildAndRender:
         html = call_args[0][0]
         assert "Acme Corp" in html
         assert "INV-001" in html
+
+    @patch("generate_invoice.render_invoice_pdf")
+    def test_omitting_terms_footer_uses_invoice_defaults(self, mock_pdf, tmp_path):
+        # With no terms/footer supplied, the build_invoice_context defaults apply
+        # rather than a CLI-level override — i.e. "Net 20" lands in the rendered HTML.
+        build_and_render(
+            harvest_data={},
+            rate_card={"rates": {}, "default_rate": None},
+            type_mappings={},
+            client_name="Acme Corp",
+            client_address=["123 St"],
+            invoice_number="INV-002",
+            invoice_date=date(2026, 4, 6),
+            output_path=str(tmp_path / "INV-002.pdf"),
+        )
+
+        html = mock_pdf.call_args[0][0]
+        assert "Net 20" in html
+        assert "We appreciate your business!" in html

@@ -89,8 +89,8 @@ uv run generate-invoice \
     --invoice-number INV-2026-042 \
     [--start ...] [--end ...] \
     [--invoice-date 2026-04-17] \
-    [--terms "Net 30"] \
-    [--footer "Thank you for your business."] \
+    [--terms "Net 15"] \
+    [--footer "Custom footer text"] \
     [--rate-card rate_card.json] \
     [--client-info client-info.json] \
     [--type-mappings type-mappings.json] \
@@ -99,7 +99,8 @@ uv run generate-invoice \
 
 `--client-name` must match a key in `client-info.json`; the script errors and
 lists known clients if it doesn't. Output is `<invoice-number>.pdf` in the
-resolved output directory.
+resolved output directory. Omitting `--terms` / `--footer` falls back to the
+invoice's standard terms and footer.
 
 ## Typical workflow
 
