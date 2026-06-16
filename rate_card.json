@@ -1,13 +1,3 @@
 {
-    "rates": {
-        "Alice Example": {
-            "Engineering": 175.00,
-            "Admin": 175.00
-        },
-        "Bob Example": {
-            "Engineering": 150.00,
-            "Creative": 140.00
-        }
-    },
-    "default_rate": null
+    "default_rate": 49.00
 }
