@@ -1,0 +1,118 @@
+# .gitignore for timex (Python 3.13 / uv project)
+# Keep uv.lock and .python-version TRACKED (do not ignore) — they are
+# intentionally committed so the locked dependency set and pinned interpreter
+# travel with the repo.
+
+# ---------------------------------------------------------------------------
+# Python bytecode & C extensions
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ---------------------------------------------------------------------------
+# Packaging / build artifacts
+# ---------------------------------------------------------------------------
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ---------------------------------------------------------------------------
+# Secrets / environment
+#   .env holds the real HARVEST_ACCESS_TOKEN — never commit it. A non-secret
+#   .env.example template is allowed back in via the negation below.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+
+# ---------------------------------------------------------------------------
+# Virtual environments (uv creates .venv/; others listed for safety)
+# ---------------------------------------------------------------------------
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ---------------------------------------------------------------------------
+# Generated output (PDFs / JSON / TSV reports produced by the CLI scripts)
+# ---------------------------------------------------------------------------
+output/
+
+# ---------------------------------------------------------------------------
+# Tooling scratch (superpowers brainstorm dirs: server.pid, server.log,
+# throwaway mockup HTML)
+# ---------------------------------------------------------------------------
+.superpowers/
+
+# ---------------------------------------------------------------------------
+# Test / coverage / type-checker caches
+# ---------------------------------------------------------------------------
+.pytest_cache/
+.cache
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.tox/
+.nox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+cython_debug/
+
+# ---------------------------------------------------------------------------
+# Logs
+# ---------------------------------------------------------------------------
+*.log
+
+# ---------------------------------------------------------------------------
+# OS cruft
+# ---------------------------------------------------------------------------
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ---------------------------------------------------------------------------
+# Editors / IDEs
+# ---------------------------------------------------------------------------
+*~
+*.swp
+*.swo
+*.swn
+*.bak
+.idea/
+.vscode/
+*.code-workspace
+*.sublime-workspace
+.netrwhist
