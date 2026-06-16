@@ -1,7 +1,10 @@
 import json
 import os
+import types
+
 import pytest
 
+import render_invoice
 from render_invoice import load_rate_card, lookup_rate, build_line_items
 
 
@@ -384,3 +387,43 @@ class TestBuildLineItemsWithTypeMappings:
 
         assert line_items[0]["task"] == "Development"
         assert total == 200.00
+
+
+class TestEnsureNativeLibPath:
+    def test_appends_existing_prefix_on_darwin(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(render_invoice.sys, "platform", "darwin")
+        monkeypatch.delenv("DYLD_FALLBACK_LIBRARY_PATH", raising=False)
+        libdir = tmp_path / "lib"
+        libdir.mkdir()
+
+        render_invoice._ensure_native_lib_path(prefixes=[str(libdir)])
+
+        assert str(libdir) in os.environ["DYLD_FALLBACK_LIBRARY_PATH"].split(os.pathsep)
+
+    def test_noop_off_darwin(self, monkeypatch):
+        monkeypatch.setattr(render_invoice.sys, "platform", "linux")
+        monkeypatch.delenv("DYLD_FALLBACK_LIBRARY_PATH", raising=False)
+
+        render_invoice._ensure_native_lib_path(prefixes=["/whatever"])
+
+        assert "DYLD_FALLBACK_LIBRARY_PATH" not in os.environ
+
+    def test_skips_nonexistent_and_preserves_existing(self, monkeypatch):
+        monkeypatch.setattr(render_invoice.sys, "platform", "darwin")
+        monkeypatch.setenv("DYLD_FALLBACK_LIBRARY_PATH", "/existing/path")
+
+        render_invoice._ensure_native_lib_path(prefixes=["/does/not/exist/12345"])
+
+        assert os.environ["DYLD_FALLBACK_LIBRARY_PATH"] == "/existing/path"
+
+
+class TestRenderInvoicePdf:
+    def test_raises_clear_error_when_native_libs_unavailable(self, monkeypatch):
+        # Simulate the import fallback (HTML is None) and confirm we surface an
+        # actionable error instead of "TypeError: 'NoneType' object is not callable".
+        monkeypatch.setattr(
+            render_invoice, "weasyprint", types.SimpleNamespace(HTML=None)
+        )
+
+        with pytest.raises(RuntimeError, match="native librar"):
+            render_invoice.render_invoice_pdf("<h1>x</h1>", "/tmp/should-not-write.pdf")

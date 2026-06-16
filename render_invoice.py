@@ -2,13 +2,45 @@
 
 import json
 import os
+import sys
 from datetime import date
 from typing import Optional
+
+# WeasyPrint loads Pango/Cairo/GObject through cffi's dlopen using bare library
+# names (e.g. "libgobject-2.0-0"). On macOS the dynamic loader only searches the
+# dyld cache and /usr/lib — never package-manager prefixes such as MacPorts'
+# /opt/local/lib or Homebrew's /opt/homebrew/lib — so the import fails with an
+# opaque OSError even when the libraries are installed. The search path must be
+# extended BEFORE importing weasyprint, because the dlopen happens at import
+# time; macOS re-reads DYLD_FALLBACK_LIBRARY_PATH for explicit dlopen() calls,
+# so setting it here (rather than only in the shell) is enough.
+_NATIVE_LIB_PREFIXES = ("/opt/local/lib", "/opt/homebrew/lib", "/usr/local/lib")
+
+
+def _ensure_native_lib_path(prefixes=_NATIVE_LIB_PREFIXES):
+    """Add known macOS native-library prefixes to DYLD_FALLBACK_LIBRARY_PATH.
+
+    No-op off macOS and for prefixes that don't exist on disk; preserves any
+    paths already present so a user-provided value is never clobbered.
+    """
+    if sys.platform != "darwin":
+        return
+    existing = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+    parts = existing.split(os.pathsep) if existing else []
+    for prefix in prefixes:
+        if os.path.isdir(prefix) and prefix not in parts:
+            parts.append(prefix)
+    if parts:
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = os.pathsep.join(parts)
+
+
+_ensure_native_lib_path()
 
 try:
     import weasyprint
 except (ImportError, OSError):
     import types as _types
+
     weasyprint = _types.SimpleNamespace(HTML=None)  # type: ignore[assignment]
 
 from jinja2 import Environment, FileSystemLoader
@@ -124,6 +156,18 @@ def render_invoice_html(context: dict) -> str:
 
 def render_invoice_pdf(html_string: str, output_path: str) -> None:
     """Convert an HTML string to a PDF file via WeasyPrint."""
+    # When the native-library import failed, weasyprint is a stub with HTML=None.
+    # Fail with an actionable message here instead of letting the call below blow
+    # up as "TypeError: 'NoneType' object is not callable" deep in the stack.
+    if weasyprint.HTML is None:
+        raise RuntimeError(
+            "WeasyPrint's native libraries (Pango/Cairo/GObject) could not be "
+            "loaded, so PDF rendering is unavailable. On macOS install them with "
+            "your package manager (MacPorts: `sudo port install pango cairo`; "
+            "Homebrew: `brew install pango`) and ensure the library directory "
+            "(e.g. /opt/local/lib or /opt/homebrew/lib) exists. See "
+            "https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation"
+        )
     weasyprint.HTML(string=html_string).write_pdf(output_path)
 
 
